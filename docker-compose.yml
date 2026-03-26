@@ -1,0 +1,16 @@
+services:
+  ros2:
+    build: .
+    container_name: ros2_gz
+
+    network_mode: host   # 🔥 IMPORTANT (better than ports)
+
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - QT_QPA_PLATFORM=offscreen
+
+    command: /usr/bin/supervisord
+
+    tty: true
+    stdin_open: true
