@@ -5,6 +5,10 @@ services:
 
     network_mode: host   # 🔥 IMPORTANT (better than ports)
 
+    volumes:
+      - ./ros2_ws:/workspace              # 🔥 ROS workspace
+      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf  # 🔥 hot reload
+
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - LIBGL_ALWAYS_SOFTWARE=1

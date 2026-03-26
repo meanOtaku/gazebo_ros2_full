@@ -41,6 +41,10 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y \
+  ros-jazzy-turtlebot3 \
+  ros-jazzy-turtlebot3-simulations
+
 # Environment
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV LIBGL_ALWAYS_SOFTWARE=1
