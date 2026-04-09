@@ -1,11 +1,20 @@
+# -----------------------------
+# Base Image
+# -----------------------------
 FROM ros:jazzy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # -----------------------------
-# Base tools
+# Use bash + pipefail (hadolint safe)
 # -----------------------------
-RUN apt-get update && apt-get install -y \
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# -----------------------------
+# Base dependencies (cached layer)
+# -----------------------------
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
     lsb-release \
@@ -30,7 +39,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
 RUN npm install -g pyright bash-language-server
 
 # -----------------------------
-# Gazebo repo
+# Gazebo repo (stable layer)
 # -----------------------------
 RUN mkdir -p /etc/apt/keyrings && \
     curl -sSL https://packages.osrfoundation.org/gazebo.key \
@@ -40,12 +49,11 @@ RUN mkdir -p /etc/apt/keyrings && \
     $(lsb_release -cs) main" \
     > /etc/apt/sources.list.d/gazebo-stable.list
 
-RUN apt-get update
-
 # -----------------------------
 # Gazebo + ROS bridge
 # -----------------------------
-RUN apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     gz-harmonic \
     ros-jazzy-ros-gz \
     ros-jazzy-ros-gz-bridge \
@@ -55,7 +63,8 @@ RUN apt-get install -y \
 # -----------------------------
 # ROS tools
 # -----------------------------
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-rmw-cyclonedds-cpp \
     ros-jazzy-slam-toolbox \
     ros-jazzy-nav2-bringup \
@@ -66,12 +75,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# LazyVim install
+# LazyVim install (stable layer)
 # -----------------------------
 RUN git clone https://github.com/LazyVim/starter /root/.config/nvim && \
     rm -rf /root/.config/nvim/.git
 
-# Optional: mount external config override
+# Allow override from volume
 RUN mkdir -p /root/.config/nvim/lua/plugins
 
 # -----------------------------
@@ -82,13 +91,33 @@ ENV LIBGL_ALWAYS_SOFTWARE=1
 ENV QT_QPA_PLATFORM=offscreen
 ENV GZ_SIM_RENDER_ENGINE=ogre2
 
+# -----------------------------
 # ROS auto-source
+# -----------------------------
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
-RUN echo "export PYTHONPATH=/opt/ros/jazzy/lib/python3.12/site-packages:$PYTHONPATH" >> ~/.bashrc
 
+# -----------------------------
+# Workspace (important for caching)
+# -----------------------------
 WORKDIR /workspace
 
+# Only copy source (better caching)
+COPY ros2_ws/src /workspace/src
+
+# -----------------------------
+# Optional build (cached unless src changes)
+# -----------------------------
+RUN source /opt/ros/jazzy/setup.bash && \
+    if [ -d "/workspace/src" ]; then \
+        colcon build || true; \
+    fi
+
+# -----------------------------
 # Supervisor config
+# -----------------------------
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# -----------------------------
+# Default command
+# -----------------------------
 CMD ["/usr/bin/supervisord"]
