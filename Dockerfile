@@ -6,12 +6,12 @@ FROM ros:jazzy
 ENV DEBIAN_FRONTEND=noninteractive
 
 # -----------------------------
-# Use bash + pipefail (hadolint safe)
+# Use bash + pipefail
 # -----------------------------
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # -----------------------------
-# Base dependencies (cached layer)
+# Base dependencies (cached)
 # -----------------------------
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -30,16 +30,19 @@ RUN --mount=type=cache,target=/var/cache/apt \
     cmake \
     && rm -rf /var/lib/apt/lists/*
 
-
+# -----------------------------
+# Install Node.js (with npm)
+# -----------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g pyright bash-language-server
+    apt-get install -y nodejs
 
-# Node + Pyright
+# -----------------------------
+# Install Node tools (LSP)
+# -----------------------------
 RUN npm install -g pyright bash-language-server
 
 # -----------------------------
-# Gazebo repo (stable layer)
+# Gazebo repo
 # -----------------------------
 RUN mkdir -p /etc/apt/keyrings && \
     curl -sSL https://packages.osrfoundation.org/gazebo.key \
@@ -75,12 +78,12 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# LazyVim install (stable layer)
+# LazyVim install
 # -----------------------------
 RUN git clone https://github.com/LazyVim/starter /root/.config/nvim && \
     rm -rf /root/.config/nvim/.git
 
-# Allow override from volume
+# Allow override via volume
 RUN mkdir -p /root/.config/nvim/lua/plugins
 
 # -----------------------------
@@ -97,20 +100,9 @@ ENV GZ_SIM_RENDER_ENGINE=ogre2
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
 
 # -----------------------------
-# Workspace (important for caching)
+# Workspace
 # -----------------------------
 WORKDIR /workspace
-
-# Only copy source (better caching)
-COPY ros2_ws/src /workspace/src
-
-# -----------------------------
-# Optional build (cached unless src changes)
-# -----------------------------
-RUN source /opt/ros/jazzy/setup.bash && \
-    if [ -d "/workspace/src" ]; then \
-        colcon build || true; \
-    fi
 
 # -----------------------------
 # Supervisor config
