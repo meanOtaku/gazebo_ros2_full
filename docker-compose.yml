@@ -8,6 +8,7 @@ services:
     volumes:
       - ./ros2_ws:/workspace              # 🔥 ROS workspace
       - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf  # 🔥 hot reload
+      - ./nvim:/root/.config/nvim   # 🔥 THIS IS KEY
 
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
