@@ -20,7 +20,7 @@ jobs:
       # Checkout
       - uses: actions/checkout@v4
 
-      # 🔥 Normalize image name (FIX)
+      # Normalize image name (lowercase)
       - name: Normalize image name
         run: |
           IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY}
@@ -36,18 +36,18 @@ jobs:
       # Setup Docker
       - uses: docker/setup-buildx-action@v3
 
-      # Build (cached, no push)
+      # Build (fast, single arch, no push)
       - name: Build Docker (fast)
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
-          load: true   # ✅ fixes warning
+          load: true
           tags: ${{ env.IMAGE_NAME_LC }}:pr
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Quick ROS2 sanity test
+      # ROS2 sanity test
       - name: Test ROS2 CLI
         run: |
           docker run --rm ${{ env.IMAGE_NAME_LC }}:pr \

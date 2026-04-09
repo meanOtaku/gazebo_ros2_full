@@ -3,8 +3,14 @@ ROS2 Gazebo and Foxglove in Docker container
 
 ```
 docker compose down
-docker compose build --no-cache
-docker compose up
+docker compose --profile dev build --no-cache
+docker compose --profile dev up
+```
+OR 
+
+```
+docker pull ghcr.io/meanotaku/gazebo_ros2_full:latest
+docker compose --profile prod up
 ```
 
 ```

@@ -1,14 +1,14 @@
 services:
   ros2:
-    build: .
+    image: ghcr.io/meanotaku/gazebo_ros2_full:latest
     container_name: ros2_gz
+    profiles: ["prod"]
 
-    network_mode: host   # 🔥 IMPORTANT (better than ports)
-
+    network_mode: host
     volumes:
-      - ./ros2_ws:/workspace              # 🔥 ROS workspace
-      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf  # 🔥 hot reload
-      - ./nvim:/root/.config/nvim   # 🔥 THIS IS KEY
+      - ./ros2_ws:/workspace
+      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+      - ./nvim:/root/.config/nvim
 
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -16,6 +16,26 @@ services:
       - QT_QPA_PLATFORM=offscreen
 
     command: /usr/bin/supervisord
+    tty: true
+    stdin_open: true
 
+
+  ros2-dev:
+    build: .
+    container_name: ros2_gz_dev
+    profiles: ["dev"]
+
+    network_mode: host
+    volumes:
+      - ./ros2_ws:/workspace
+      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+      - ./nvim:/root/.config/nvim
+
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - QT_QPA_PLATFORM=offscreen
+
+    command: /usr/bin/supervisord
     tty: true
     stdin_open: true
