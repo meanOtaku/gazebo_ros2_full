@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/gazebo_ros2_full
 
 jobs:
   fast-check:
@@ -39,6 +39,7 @@ jobs:
         with:
           context: .
           push: false
+          load: true
           tags: ${{ env.IMAGE_NAME }}:pr
           cache-from: type=gha
           cache-to: type=gha,mode=max
