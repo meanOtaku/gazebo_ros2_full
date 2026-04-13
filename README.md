@@ -14,12 +14,13 @@ OR
 
 Create this project.
 
+```
 /Ros_Project/
  ├── ros2_ws
     └── src
  ├── docker-compose.yml
  └── supervisord.conf
-
+```
 Inside Ros_Project copy:
 1. docker-compose.yml
 2. supervisord.conf

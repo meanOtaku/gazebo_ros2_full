@@ -1,12 +1,20 @@
 name: CI Fast (PR)
 
 on:
-  pull_request:
   push:
-    branches-ignore: [ "main" ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+    branches: [ "main" ]
+    paths:
+      - 'ros2_ws/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/**'
+
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'ros2_ws/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
 
 concurrency:
   group: ci-fast-${{ github.ref }}

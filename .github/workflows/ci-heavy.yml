@@ -3,9 +3,18 @@ name: CI Heavy + CD
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+    paths:
+      - 'ros2_ws/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/**'
+
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'ros2_ws/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
 
 concurrency:
   group: ci-heavy-${{ github.ref }}
