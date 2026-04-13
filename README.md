@@ -16,6 +16,7 @@ Create this project.
 
 ```
 /Ros_Project/
+ ├── nvim
  ├── ros2_ws
     └── src
  ├── docker-compose.yml
@@ -24,6 +25,7 @@ Create this project.
 Inside Ros_Project copy:
 1. docker-compose.yml
 2. supervisord.conf
+3. nvim
 
 ```
 docker pull ghcr.io/meanotaku/gazebo_ros2_full:latest
