@@ -3,6 +3,9 @@ name: CI Heavy + CD
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
 
 concurrency:
   group: ci-heavy-${{ github.ref }}

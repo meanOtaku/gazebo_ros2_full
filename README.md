@@ -2,11 +2,27 @@
 ROS2 Gazebo and Foxglove in Docker container
 
 ```
+git clone https://github.com/meanOtaku/gazebo_ros2_full.git
+```
+
+```
 docker compose down
 docker compose --profile dev build --no-cache
 docker compose --profile dev up
 ```
 OR 
+
+Create this project.
+
+/Ros_Project/
+ ├── ros2_ws
+    └── src
+ ├── docker-compose.yml
+ └── supervisord.conf
+
+Inside Ros_Project copy:
+1. docker-compose.yml
+2. supervisord.conf
 
 ```
 docker pull ghcr.io/meanotaku/gazebo_ros2_full:latest
