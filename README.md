@@ -7,7 +7,7 @@ git clone https://github.com/meanOtaku/gazebo_ros2_full.git
 
 ```
 docker compose down
-docker compose --profile dev build --no-cache
+DOCKER_BUILDKIT=1 docker compose --profile dev build --no-cache
 docker compose --profile dev up
 ```
 OR 

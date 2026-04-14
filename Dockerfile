@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.6
+
 # -----------------------------
 # Base Image
 # -----------------------------
@@ -5,76 +7,37 @@ FROM ros:jazzy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# -----------------------------
-# Use bash + pipefail
-# -----------------------------
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # -----------------------------
-# Apt reliability
-# -----------------------------
-RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries && \
-    echo 'Acquire::http::Timeout "30";' >> /etc/apt/apt.conf.d/80-retries && \
-    echo 'Acquire::ForceIPv4 "true";' >> /etc/apt/apt.conf.d/80-retries
-
-# -----------------------------
-# Base dependencies (NO neovim here ❗)
+# Base deps
 # -----------------------------
 RUN --mount=type=cache,target=/var/cache/apt \
-    set -eux; \
-    apt-get clean; \
-    rm -rf /var/lib/apt/lists/*; \
-    for i in 1 2 3 4 5; do \
-        apt-get update && break || sleep 5; \
-    done; \
-    apt-get install -y --no-install-recommends \
-        curl \
-        gnupg \
-        lsb-release \
-        software-properties-common \
-        supervisor \
-        git \
-        ripgrep \
-        fd-find \
-        clangd \
-        python3-pip \
-        build-essential \
-        cmake \
-        ca-certificates \
-    ; \
-    rm -rf /var/lib/apt/lists/*
+    apt-get update && apt-get install -y --no-install-recommends \
+        curl gnupg lsb-release software-properties-common \
+        supervisor git ripgrep fd-find clangd python3-pip \
+        build-essential cmake ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Install latest Neovim (ARCH SAFE)
+# Neovim (arch-safe)
 # -----------------------------
 RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-        NVIM_ARCH="nvim-linux-x86_64"; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-        NVIM_ARCH="nvim-linux-arm64"; \
-    else \
-        echo "Unsupported architecture: $ARCH" && exit 1; \
-    fi && \
+    if [ "$ARCH" = "x86_64" ]; then NVIM_ARCH="nvim-linux-x86_64"; \
+    elif [ "$ARCH" = "aarch64" ]; then NVIM_ARCH="nvim-linux-arm64"; \
+    else echo "Unsupported arch"; exit 1; fi && \
     curl -LO https://github.com/neovim/neovim/releases/latest/download/${NVIM_ARCH}.tar.gz && \
-    rm -rf /opt/nvim && \
     tar -C /opt -xzf ${NVIM_ARCH}.tar.gz && \
     ln -s /opt/${NVIM_ARCH}/bin/nvim /usr/local/bin/nvim && \
     rm ${NVIM_ARCH}.tar.gz
 
-# Verify version (debug)
-RUN nvim --version
-
 # -----------------------------
-# Node.js
+# Node + LSP tools
 # -----------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get update && apt-get install -y nodejs && \
+    npm install -g pyright bash-language-server && \
     rm -rf /var/lib/apt/lists/*
-
-# -----------------------------
-# Node tools
-# -----------------------------
-RUN npm install -g pyright bash-language-server
 
 # -----------------------------
 # Gazebo repo
@@ -88,7 +51,7 @@ RUN mkdir -p /etc/apt/keyrings && \
     > /etc/apt/sources.list.d/gazebo-stable.list
 
 # -----------------------------
-# Gazebo + ROS bridge
+# ROS + Gazebo (combined)
 # -----------------------------
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -96,13 +59,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
         ros-jazzy-ros-gz \
         ros-jazzy-ros-gz-bridge \
         ros-jazzy-ros-gz-sim \
-    && rm -rf /var/lib/apt/lists/*
-
-# -----------------------------
-# ROS tools
-# -----------------------------
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
         ros-jazzy-rmw-cyclonedds-cpp \
         ros-jazzy-slam-toolbox \
         ros-jazzy-nav2-bringup \
@@ -118,11 +74,12 @@ RUN --mount=type=cache,target=/var/cache/apt \
 RUN git clone https://github.com/LazyVim/starter /root/.config/nvim && \
     rm -rf /root/.config/nvim/.git
 
-# Preinstall plugins (non-blocking)
-RUN nvim --headless "+Lazy! sync" +qa || true
-
-# Allow plugin overrides
-RUN mkdir -p /root/.config/nvim/lua/plugins
+# -----------------------------
+# 🔥 Plugin install WITH CACHE
+# -----------------------------
+RUN --mount=type=cache,target=/root/.local/share/nvim \
+    --mount=type=cache,target=/root/.cache/nvim \
+    nvim --headless "+Lazy! sync" +qa
 
 # -----------------------------
 # Environment
@@ -133,22 +90,16 @@ ENV QT_QPA_PLATFORM=offscreen
 ENV GZ_SIM_RENDER_ENGINE=ogre2
 
 # -----------------------------
-# ROS auto-source
+# ROS setup
 # -----------------------------
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
     echo "source /workspace/install/setup.bash 2>/dev/null || true" >> /root/.bashrc
 
-# -----------------------------
-# Workspace
-# -----------------------------
 WORKDIR /workspace
 
 # -----------------------------
-# Supervisor config
+# Supervisor
 # -----------------------------
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# -----------------------------
-# Default command
-# -----------------------------
 CMD ["/usr/bin/supervisord"]

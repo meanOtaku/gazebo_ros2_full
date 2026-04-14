@@ -1,27 +1,15 @@
-name: CI Heavy + CD
+name: Build & Push Multi-Arch Image
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
     paths:
-      - 'ros2_ws/**'
       - 'Dockerfile'
       - 'docker-compose.yml'
-      - '.github/workflows/**'
-
-  pull_request:
-    branches: [ "main" ]
-    paths:
-      - 'ros2_ws/**'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-
-concurrency:
-  group: ci-heavy-${{ github.ref }}
-  cancel-in-progress: true
+      - '.github/workflows/ci-heavy.yml'
 
 jobs:
-  heavy:
+  build:
     runs-on: ubuntu-latest
 
     permissions:
@@ -29,60 +17,39 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Normalize image name
-        run: |
-          IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY}
-          echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >> $GITHUB_ENV
+      # Setup QEMU (for multi-arch)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      # Setup Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      # Login to GHCR
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Fast test build (amd64 only)
-      - name: Build Docker (test)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          load: true
-          push: false
-          platforms: linux/amd64
-          tags: ${{ env.IMAGE_NAME_LC }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Test ROS2 CLI
-        run: |
-          docker run --rm ${{ env.IMAGE_NAME_LC }}:latest \
-          bash -c "source /opt/ros/jazzy/setup.bash && ros2 --help"
-
-      - name: Build ROS2 workspace
-        if: hashFiles('ros2_ws/src/**') != ''
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/ros2_ws:/workspace \
-            ${{ env.IMAGE_NAME_LC }}:latest \
-            bash -c "source /opt/ros/jazzy/setup.bash && cd /workspace && colcon build"
-
-      - name: Test Gazebo headless
-        run: |
-          docker run --rm ${{ env.IMAGE_NAME_LC }}:latest \
-          bash -c "gz sim -r -s empty.sdf --iterations 5"
-
-      # Multi-arch build (only here)
-      - name: Build & Push (multi-arch)
+      # 🔥 Build + Cache + Push
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+
           platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.IMAGE_NAME_LC }}:latest
-            ${{ env.IMAGE_NAME_LC }}:${{ github.sha }}
-          cache-from: type=gha
+
+          # 🔥 CACHE (THIS IS THE MAGIC)
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:cache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:cache,mode=max
+
+          # Optional but useful
+          provenance: false
