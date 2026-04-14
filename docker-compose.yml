@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   ros2:
     image: ghcr.io/meanotaku/gazebo_ros2_full:latest
@@ -8,7 +10,11 @@ services:
     volumes:
       - ./ros2_ws:/workspace
       - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
-      - ./nvim:/root/.config/nvim
+
+      # ✅ LazyVim persistence
+      - nvim-data:/root/.local/share/nvim
+      - nvim-state:/root/.local/state/nvim
+      - nvim-cache:/root/.cache/nvim
 
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -29,7 +35,11 @@ services:
     volumes:
       - ./ros2_ws:/workspace
       - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
-      - ./nvim:/root/.config/nvim
+
+      # ✅ LazyVim persistence
+      - nvim-data:/root/.local/share/nvim
+      - nvim-state:/root/.local/state/nvim
+      - nvim-cache:/root/.cache/nvim
 
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -39,3 +49,9 @@ services:
     command: /usr/bin/supervisord
     tty: true
     stdin_open: true
+
+
+volumes:
+  nvim-data:
+  nvim-state:
+  nvim-cache:

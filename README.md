@@ -35,6 +35,10 @@ docker compose --profile prod up
 ```
 docker exec -it ros2_gz bash
 ```
+OR
+```
+docker exec -it ros2_gz_dev supervisorctl start dev
+```
 
 inside container
 
