@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1.6
 
+# -----------------------------
+# Base Image
+# -----------------------------
 FROM ros:jazzy
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # -----------------------------
-# Base dependencies (NO apt cache mount ❗)
+# Base dependencies (CI SAFE)
 # -----------------------------
 RUN set -eux; \
     apt-get update; \
@@ -28,7 +31,7 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Neovim (arch-safe)
+# Neovim (latest, arch-safe)
 # -----------------------------
 RUN set -eux; \
     ARCH=$(uname -m); \
@@ -41,7 +44,7 @@ RUN set -eux; \
     rm ${NVIM_ARCH}.tar.gz
 
 # -----------------------------
-# Node + LSP tools
+# Node.js + LSP tools
 # -----------------------------
 RUN set -eux; \
     curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -; \
@@ -64,7 +67,7 @@ RUN set -eux; \
     > /etc/apt/sources.list.d/gazebo-stable.list
 
 # -----------------------------
-# ROS + Gazebo (single layer)
+# ROS + Gazebo + tools
 # -----------------------------
 RUN set -eux; \
     apt-get update; \
@@ -84,20 +87,42 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# LazyVim install (cached safely)
+# LazyVim install (NO plugins)
 # -----------------------------
 RUN git clone https://github.com/LazyVim/starter /root/.config/nvim && \
     rm -rf /root/.config/nvim/.git
 
-# -----------------------------
-# Lazy plugins (SAFE cache mount)
-# -----------------------------
-RUN --mount=type=cache,target=/root/.local/share/nvim \
-    --mount=type=cache,target=/root/.cache/nvim \
-    nvim --headless "+Lazy! sync" +qa
+# Minimal init
+RUN nvim --headless "+qall" || true
+
+# Allow plugin overrides
+RUN mkdir -p /root/.config/nvim/lua/plugins
 
 # -----------------------------
-# Environment
+# LazyVim bootstrap (AUTO INSTALL)
+# -----------------------------
+RUN printf '#!/usr/bin/env bash\n\
+if [ ! -d "/root/.local/share/nvim/lazy" ]; then\n\
+  echo "Installing LazyVim plugins (first run)..."\n\
+  nvim --headless "+Lazy! sync" +qa || true\n\
+else\n\
+  echo "LazyVim plugins already installed."\n\
+fi\n' > /usr/local/bin/nvim-bootstrap && chmod +x /usr/local/bin/nvim-bootstrap
+
+# -----------------------------
+# ROS + Python environment (CRITICAL)
+# -----------------------------
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "source /workspace/install/setup.bash 2>/dev/null || true" >> /root/.bashrc && \
+    echo "export PYTHONPATH=/opt/ros/jazzy/lib/python3.12/site-packages:\$PYTHONPATH" >> /root/.bashrc && \
+    echo "export PYTHONPATH=/workspace/install/lib/python3.12/site-packages:\$PYTHONPATH" >> /root/.bashrc && \
+    echo "/usr/local/bin/nvim-bootstrap" >> /root/.bashrc
+
+# Also set globally (not just bash)
+ENV PYTHONPATH=/opt/ros/jazzy/lib/python3.12/site-packages:/workspace/install/lib/python3.12/site-packages
+
+# -----------------------------
+# Runtime environment
 # -----------------------------
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV LIBGL_ALWAYS_SOFTWARE=1
@@ -105,16 +130,16 @@ ENV QT_QPA_PLATFORM=offscreen
 ENV GZ_SIM_RENDER_ENGINE=ogre2
 
 # -----------------------------
-# ROS setup
+# Workspace
 # -----------------------------
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
-    echo "source /workspace/install/setup.bash 2>/dev/null || true" >> /root/.bashrc
-
 WORKDIR /workspace
 
 # -----------------------------
-# Supervisor
+# Supervisor config
 # -----------------------------
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# -----------------------------
+# Start
+# -----------------------------
 CMD ["/usr/bin/supervisord"]
