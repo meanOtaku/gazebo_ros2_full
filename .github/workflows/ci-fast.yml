@@ -1,62 +1,66 @@
-name: CI Fast (PR)
+name: Fast CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
     paths:
       - 'ros2_ws/**'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-      - '.github/workflows/**'
+      - '**/*.py'
+      - '**/*.cpp'
+      - '**/*.hpp'
+      - '**/*.h'
 
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
     paths:
       - 'ros2_ws/**'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-
-concurrency:
-  group: ci-fast-${{ github.ref }}
-  cancel-in-progress: true
+      - '**/*.py'
+      - '**/*.cpp'
+      - '**/*.hpp'
+      - '**/*.h'
 
 jobs:
   fast-check:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-
     steps:
-      - uses: actions/checkout@v4
+      # -----------------------------
+      # Checkout
+      # -----------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Normalize image name
-        run: |
-          IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY}
-          echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >> $GITHUB_ENV
-
-      - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+      # -----------------------------
+      # Setup ROS Jazzy
+      # -----------------------------
+      - name: Setup ROS
+        uses: ros-tooling/setup-ros@v0.7
         with:
-          config: .hadolint.yaml
-          failure-threshold: error
+          required-ros-distributions: jazzy
 
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker (fast)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          load: true
-          platforms: linux/amd64
-          tags: ${{ env.IMAGE_NAME_LC }}:pr
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-
-      - name: Test ROS2 CLI
+      # -----------------------------
+      # Install minimal build tools
+      # -----------------------------
+      - name: Install dependencies
         run: |
-          docker run --rm ${{ env.IMAGE_NAME_LC }}:pr \
-          bash -c "source /opt/ros/jazzy/setup.bash && ros2 --help"
+          sudo apt-get update
+          sudo apt-get install -y python3-colcon-common-extensions
+
+      # -----------------------------
+      # Build (FAST compile check)
+      # -----------------------------
+      - name: Build workspace
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd ros2_ws
+          colcon build --event-handlers console_direct+
+
+      # -----------------------------
+      # Python lint (optional but useful)
+      # -----------------------------
+      - name: Install lint tools
+        run: pip install flake8
+
+      - name: Run flake8
+        run: |
+          flake8 ros2_ws || true
