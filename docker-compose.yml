@@ -7,11 +7,12 @@ services:
     profiles: ["prod"]
 
     network_mode: host
+
     volumes:
       - ./ros2_ws:/workspace
       - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
 
-      # ✅ LazyVim persistence
+      # LazyVim persistence
       - nvim-data:/root/.local/share/nvim
       - nvim-state:/root/.local/state/nvim
       - nvim-cache:/root/.cache/nvim
@@ -20,6 +21,7 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - LIBGL_ALWAYS_SOFTWARE=1
       - QT_QPA_PLATFORM=offscreen
+      - TURTLEBOT3_MODEL=burger   # 🔥 IMPORTANT
 
     command: /usr/bin/supervisord
     tty: true
@@ -32,11 +34,12 @@ services:
     profiles: ["dev"]
 
     network_mode: host
+
     volumes:
       - ./ros2_ws:/workspace
       - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
 
-      # ✅ LazyVim persistence
+      # LazyVim persistence
       - nvim-data:/root/.local/share/nvim
       - nvim-state:/root/.local/state/nvim
       - nvim-cache:/root/.cache/nvim
@@ -45,6 +48,7 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - LIBGL_ALWAYS_SOFTWARE=1
       - QT_QPA_PLATFORM=offscreen
+      - TURTLEBOT3_MODEL=burger   # 🔥 IMPORTANT
 
     command: /usr/bin/supervisord
     tty: true
