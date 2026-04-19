@@ -82,6 +82,7 @@ RUN set -eux; \
         ros-jazzy-foxglove-bridge \
         ros-jazzy-turtlebot3 \
         ros-jazzy-turtlebot3-simulations \
+        ros-jazzy-turtlebot3-description \
         python3-colcon-common-extensions \
     ; \
     rm -rf /var/lib/apt/lists/*
