@@ -60,26 +60,26 @@ RUN set -eux; \
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        \
-        # ✅ ROS-GZ (this pulls correct Gazebo automatically)
         ros-jazzy-ros-gz \
         ros-jazzy-ros-gz-sim \
         ros-jazzy-ros-gz-bridge \
-        ros-jazzy-ros-gz-interfaces \
         \
-        # ROS stack
+        libgz-sim8 \
+        libgz-sim8-gui \
+        libgz-rendering8 \
+        libgz-tools2 \
+        \
         ros-jazzy-rmw-cyclonedds-cpp \
         ros-jazzy-slam-toolbox \
         ros-jazzy-nav2-bringup \
         ros-jazzy-foxglove-bridge \
         \
-        # Turtlebot
         ros-jazzy-turtlebot3 \
         ros-jazzy-turtlebot3-simulations \
         ros-jazzy-turtlebot3-description \
         \
-        python3-colcon-common-extensions \
         ros-jazzy-teleop-twist-keyboard \
+        python3-colcon-common-extensions \
     ; \
     rm -rf /var/lib/apt/lists/*
 
