@@ -72,17 +72,8 @@ RUN set -eux; \
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        # Gazebo (ROS-compatible)
-        gz-sim8 \
-        gz-sim8-plugins \
-        libgz-sim8 \
-        libgz-plugin2 \
-        libgz-transport13 \
-        libgz-msgs10 \
-        libgz-common5 \
-        libignition-math6 \
         \
-        # ROS-GZ
+        # ✅ ROS-GZ (this pulls correct Gazebo automatically)
         ros-jazzy-ros-gz \
         ros-jazzy-ros-gz-sim \
         ros-jazzy-ros-gz-bridge \
