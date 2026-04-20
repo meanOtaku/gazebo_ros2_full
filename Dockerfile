@@ -55,18 +55,6 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Gazebo repo
-# -----------------------------
-RUN set -eux; \
-    mkdir -p /etc/apt/keyrings; \
-    curl -sSL https://packages.osrfoundation.org/gazebo.key \
-    | gpg --dearmor -o /etc/apt/keyrings/gazebo.gpg; \
-    echo "deb [signed-by=/etc/apt/keyrings/gazebo.gpg] \
-    http://packages.osrfoundation.org/gazebo/ubuntu-stable \
-    $(lsb_release -cs) main" \
-    > /etc/apt/sources.list.d/gazebo-stable.list
-
-# -----------------------------
 # ROS + Gazebo + tools
 # -----------------------------
 RUN set -eux; \
