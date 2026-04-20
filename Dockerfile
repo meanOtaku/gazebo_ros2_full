@@ -65,6 +65,7 @@ RUN set -eux; \
         ros-jazzy-ros-gz \
         ros-jazzy-ros-gz-sim \
         ros-jazzy-ros-gz-bridge \
+        ros-jazzy-ros-gz-interfaces \
         \
         # ROS stack
         ros-jazzy-rmw-cyclonedds-cpp \
