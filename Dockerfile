@@ -90,6 +90,7 @@ RUN set -eux; \
         ros-jazzy-turtlebot3-description \
         \
         python3-colcon-common-extensions \
+        ros-jazzy-teleop-twist-keyboard \
     ; \
     rm -rf /var/lib/apt/lists/*
 
