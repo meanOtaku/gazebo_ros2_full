@@ -64,11 +64,6 @@ RUN set -eux; \
         ros-jazzy-ros-gz-sim \
         ros-jazzy-ros-gz-bridge \
         \
-        libgz-sim8 \
-        libgz-sim8-gui \
-        libgz-rendering8 \
-        libgz-tools2 \
-        \
         ros-jazzy-rmw-cyclonedds-cpp \
         ros-jazzy-slam-toolbox \
         ros-jazzy-nav2-bringup \
